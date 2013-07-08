@@ -5,6 +5,8 @@ var Cleverbot = require('cleverbot-node');
 var bot = new Steam.SteamClient();
 var config;
 
+var cleverbots = {};
+
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
@@ -89,8 +91,11 @@ bot.on('message', function(source, message, type, chatter) {
         bot.sendMessage(source, 'pong', Steam.EChatEntryType.ChatMsg);
       }
       else {
-        var cbot = new Cleverbot;
-        cbot.write(message, function(resp) {
+        if (cleverbots[source] === undefined) {
+          cleverbots[source] = new Cleverbot;
+        }
+        
+        cleverbots[source].write(message, function(resp) {
           var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
           bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
           console.log('Reply to ' + source + ' - message "' + message + '": ' + resp['message']);
