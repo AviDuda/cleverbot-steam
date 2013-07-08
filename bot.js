@@ -1,4 +1,5 @@
 var fs = require('fs');
+var util = require('util');
 var Steam = require('steam');
 var Cleverbot = require('cleverbot-node');
 
@@ -20,7 +21,7 @@ fs.readFile('config.json', function (err, data) {
 process.stdin.on('data', function (text) {
   text = text.trim();
 
-  console.log('received data:', text);
+  util.log('received data:', text);
   textArr = text.split(' ');
 
   if (textArr[0] == 'join' && textArr[1]) {
@@ -28,19 +29,19 @@ process.stdin.on('data', function (text) {
     joinChat(textArr[1], message);
   }
   else if (text.toLowerCase() === 'show chatrooms') {
-    console.log(bot.chatRooms);
+    util.log(bot.chatRooms);
   }
   else if (text.toLowerCase() === 'show users') {
-    console.log(bot.users);
+    util.log(bot.users);
   }
   else if (text.toLowerCase() === 'quit') {
-    console.log('Bye!');
+    util.log('Bye!');
     process.exit();
   }
 });
 
 bot.on('loggedOn', function() {
-  console.log('Logged in!');
+  util.log('Logged in!');
   bot.setPersonaState(Steam.EPersonaState.Online);
 
   for (chatID in config.autoJoin) {
@@ -49,7 +50,7 @@ bot.on('loggedOn', function() {
 });
 
 bot.on('relationship', function(steamID, relationship) {
-  console.log('Relationship change for ' + steamID + ' - ' + relationship);
+  util.log('Relationship change for ' + steamID + ' - ' + relationship);
   if (relationship == Steam.EFriendRelationship.PendingInvitee) {
     bot.addFriend(steamID);
     bot.sendMessage(steamID, "Hi, thanks for adding me to your friends! I'm Cleverbot, I will reply to all of your questions.", Steam.EChatEntryType.ChatMsg);
@@ -57,7 +58,7 @@ bot.on('relationship', function(steamID, relationship) {
 });
 
 bot.on('chatInvite', function(chatRoomID, chatRoomName, patronID) {
-  console.log('Got an invite to ' + chatRoomName + ' from ' + bot.users[patronID].playerName);
+  util.log('Got an invite to ' + chatRoomName + ' from ' + bot.users[patronID].playerName);
   bot.joinChat(chatRoomID); // autojoin on invite
 });
 
@@ -86,20 +87,20 @@ bot.on('message', function(source, message, type, chatter) {
     }
 
     if (shouldReply) {
-      console.log('Received message from ' + source + ': ' + message);
+      util.log('Received message from ' + source + ': ' + message);
       if (message == 'ping') {
         bot.sendMessage(source, 'pong', Steam.EChatEntryType.ChatMsg);
       }
       else {
         if (cleverbots[source] === undefined) {
-          console.log("New Cleverbot instance for " + source);
+          util.log("New Cleverbot instance for " + source);
           cleverbots[source] = new Cleverbot;
         }
 
         cleverbots[source].write(message, function(resp) {
           var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
           bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
-          console.log('Reply to ' + source + ' - message "' + message + '": ' + resp['message']);
+          util.log('Reply to ' + source + ' - message "' + message + '": ' + resp['message']);
         });
       }
     }
@@ -111,11 +112,11 @@ bot.on('error', function(e) {
 });
 
 function showError(err) {
-  console.log('ERROR: ' + err);
+  util.log('ERROR: ' + err);
 }
 
 function joinChat(roomID, message) {
-  console.log('Joining chat ' + roomID);
+  util.log('Joining chat ' + roomID);
   bot.joinChat(roomID);
   if (message) {
     bot.sendMessage(roomID, message, Steam.EChatEntryType.ChatMsg);
