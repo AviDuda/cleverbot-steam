@@ -92,9 +92,10 @@ bot.on('message', function(source, message, type, chatter) {
       }
       else {
         if (cleverbots[source] === undefined) {
+          console.log("New Cleverbot instance for " + source);
           cleverbots[source] = new Cleverbot;
         }
-        
+
         cleverbots[source].write(message, function(resp) {
           var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
           bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
