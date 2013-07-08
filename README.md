@@ -2,6 +2,8 @@
 
 Simple Steam chat bot for people who are bored and don't have anyone to talk with. <3 [Cleverbot](http://www.cleverbot.com/).
 
+[Try it now, talk with my bot!](http://steamcommunity.com/id/YouAreABot/)
+
 ## Commands
 
 * `join <roomID> [<message>]` - Join a specified chatroom (group or private) with an optional message
