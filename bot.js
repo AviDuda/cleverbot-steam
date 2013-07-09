@@ -55,74 +55,8 @@ bot.on('message', function(source, message, type, chatter) {
       joinChat(source, false);
     }
 
-    if (chatter === undefined) {
-      // chat between a bot and another user
-
-      // check if the user is bot's admin and if it starts with / for commands (e.g. /join <roomid> [message])
-      if (config.botAdmins.indexOf(source) >= 0 && message[0] == "/") {
-        var msgArr = message.split(" ");
-
-        var helpText = "Available commands: \
-\n/join <roomID> [<message>] - Joins the room and posts a message '" + config.defaultJoinMessage + "' unless the message is specified. Set the message to 'false' if you don't want to send a message. \
-\n/send <roomID> <message> - Sends a message to a chatroom. \
-\n/sendtoall <lastActiveAgoInMS> <message> - Sends a message to all rooms which have the last message to/from bot was max. lastActiveAgoInMS milliseconds ago. lastActiveAgoInMS's default is 300000 (5 minutes). \
-\n/chatrooms - List of chatrooms with members. \
-\n/status online|offline|away|snooze|busy - Sets bot's status. Warning: Bot isn't responding to any messages when you set its status to offline. \
-\n/name <name> - Sets the bot's name.";
-
-        if (/^\/join.*/.test(message) && msgArr.length >= 1) { // /join <roomID> [<message>]
-            joinChat(msgArr[1], msgArr.slice(2).join(' '));
-        }
-        else if(/^\/send.*/.test(message) && msgArr.length >= 3) { // /send <roomID> <message>
-          bot.sendMessage(msgArr[1], msgArr.slice(2).join(' '), Steam.EChatEntryType.ChatMsg);
-        }
-        else if(/^\/sendtoall.*/.test(message) && msgArr.length >= 3) { // /sendtoall <lastActiveAgoInMS> <message>
-          var lastActiveAgoInMS = parseInt(msgArr[1]) || 300000; // 300000 = 1000 * 60 * 5 = 5 minutes
-          for (roomID in cleverbots) {
-            if (new Date() - cleverbots[roomID]["lastMessage"] <= lastActiveAgoInMS) {
-              bot.sendMessage(roomID, msgArr.slice(1).join(' '), Steam.EChatEntryType.ChatMsg);
-            }
-          }
-        }
-        else if(message == "/chatrooms") {
-          var reply = Object.keys(cleverbots).length + " chatrooms found.";
-          for (roomID in cleverbots) {
-            if (bot.chatRooms[roomID] === undefined) {
-              // private chat
-              reply += "\nhttp://steamcommunity.com/profiles/" + roomID;
-            }
-            else {
-              // group chat
-              var groupWord = (parseInt(roomID)) ? "gid" : "groups";
-              reply += "\nhttp://steamcommunity.com/" + groupWord + "/" + roomID + " - " + Object.keys(bot.chatRooms[roomID]).length + " members";
-            }
-
-            reply += " - last message " + cleverbots[roomID]["lastMessage"];
-          }
-          bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
-        }
-        else if(/^\/status.*/.test(message) && msgArr.length == 2) { // /status online|offline|away|snooze|busy
-          setState(msgArr[1]);
-        }
-        else if(/^\/name.*/.test(message) && msgArr.length >= 1) { // /name <name>
-          util.log("Setting bot's name to " + msgArr.slice(1).join(' '));
-          bot.setPersonaName(msgArr.slice(1).join(' '));
-        }
-        else if(message == "/help") {
-          bot.sendMessage(source, helpText, Steam.EChatEntryType.ChatMsg);
-        }
-        else {
-          var reply = "Unknown command '" + message + "'.\n" + helpText;
-          bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
-        }
-      }
-      else {
-        shouldReply = true;
-      }
-    }
-    else {
-      // it's a group chat, respond only when users call Cleverbot directly (config.listenToCalls)
-
+    if (chatter) {
+      // find if the bot should reply in the group chat
       for (var i = 0; i < config.listenToCalls.length; i++) {
         if (message.toLowerCase().substr(0, config.listenToCalls[i].length) == config.listenToCalls[i].toLowerCase()) {
           message = message.replace(new RegExp("^" + config.listenToCalls[i] + "[ ,.?!]+", "i"), "");
@@ -132,10 +66,76 @@ bot.on('message', function(source, message, type, chatter) {
       }
     }
 
+    if (message[0] == "/" && (config.botAdmins.indexOf(source) >= 0 || config.botAdmins.indexOf(chatter) >= 0)) {
+      // it's a command
+
+      shouldReply = false;
+
+      var msgArr = message.split(" ");
+
+      var helpText = "Available commands: \
+\n/join <roomID> [<message>] - Joins the room and posts a message '" + config.defaultJoinMessage + "' unless the message is specified. Set the message to 'false' if you don't want to send a message. \
+\n/send <roomID> <message> - Sends a message to a chatroom. \
+\n/sendtoall <lastActiveAgoInMS> <message> - Sends a message to all rooms which have the last message to/from bot was max. lastActiveAgoInMS milliseconds ago. lastActiveAgoInMS's default is 300000 (5 minutes). \
+\n/chatrooms - List of chatrooms with members. \
+\n/status online|offline|away|snooze|busy - Sets the bot's status. Warning: Bot isn't responding to any messages when you set its status to offline. \
+\n/name <name> - Sets the bot's name.";
+
+      if (/^\/join.*/.test(message) && msgArr.length >= 1) { // /join <roomID> [<message>]
+          joinChat(msgArr[1], msgArr.slice(2).join(' '));
+      }
+      else if(/^\/send.*/.test(message) && msgArr.length >= 3) { // /send <roomID> <message>
+        bot.sendMessage(msgArr[1], msgArr.slice(2).join(' '), Steam.EChatEntryType.ChatMsg);
+      }
+      else if(/^\/sendtoall.*/.test(message) && msgArr.length >= 3) { // /sendtoall <lastActiveAgoInMS> <message>
+        var lastActiveAgoInMS = parseInt(msgArr[1]) || 300000; // 300000 = 1000 * 60 * 5 = 5 minutes
+        for (roomID in cleverbots) {
+          if (new Date() - cleverbots[roomID]["lastMessage"] <= lastActiveAgoInMS) {
+            bot.sendMessage(roomID, msgArr.slice(1).join(' '), Steam.EChatEntryType.ChatMsg);
+          }
+        }
+      }
+      else if(message == "/chatrooms") {
+        var reply = Object.keys(cleverbots).length + " chatrooms found.";
+        for (roomID in cleverbots) {
+          if (bot.chatRooms[roomID] === undefined) {
+            // private chat
+            reply += "\nhttp://steamcommunity.com/profiles/" + roomID;
+          }
+          else {
+            // group chat
+            var groupWord = (parseInt(roomID)) ? "gid" : "groups";
+            reply += "\nhttp://steamcommunity.com/" + groupWord + "/" + roomID + " - " + Object.keys(bot.chatRooms[roomID]).length + " members";
+          }
+
+          reply += " - last message " + cleverbots[roomID]["lastMessage"];
+        }
+        bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
+      }
+      else if(/^\/status.*/.test(message) && msgArr.length == 2) { // /status online|offline|away|snooze|busy
+        setState(msgArr[1]);
+      }
+      else if(/^\/name.*/.test(message) && msgArr.length >= 1) { // /name <name>
+        util.log("Setting bot's name to " + msgArr.slice(1).join(' '));
+        bot.setPersonaName(msgArr.slice(1).join(' '));
+      }
+      else if(message == "/help") {
+        bot.sendMessage(source, helpText, Steam.EChatEntryType.ChatMsg);
+      }
+      else {
+        var reply = "Unknown command '" + message + "'.\n" + helpText;
+        bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
+      }
+    }
+    else if (chatter === undefined) {
+      // not a command and in a private chat
+      shouldReply = true;
+    }
+
     if (shouldReply) {
       cleverbots[source]["cleverbot"].write(message, function(resp) {
         cleverbots[source]["lastMessage"] = new Date();
-        var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
+        var reply = (chatter === undefined) ? resp['message'] : bot.users[chatter].playerName + ': ' + message + "\n" + resp['message'];
         bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
       });
     }
