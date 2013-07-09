@@ -15,9 +15,10 @@ Simple Steam chat bot for people who are bored and don't have anyone to talk wit
 
 * Install [node.js](http://nodejs.org/).
 * In the directory with cleverbot-steam:
-  * `npm install steam cleverbot-node`
+  * `npm install` to install dependencies
   * Set values in [config.json](config.json):
       * `botName` - This will change the profile name of your bot.
       * `listenToCalls` - Bot replies in the group chat only to messages starting with the specified strings (case insensitive).
       * `autoJoin` - List of chatrooms (group and friend chats) to automatically join with an optional message (say hello).
   * Set environment variables `STEAM_USERNAME` and `STEAM_PASSWORD` and run the script (example in [start_bot.sh.example](start_bot.sh.example) - for Linux).
+  * If you want to run the script forever and not only until it crashes: `npm install forever` and change `node` to `forever start` in start_bot.sh.

@@ -4,6 +4,10 @@
   "description": "Cleverbot - Steam bot",
   "version": "0.0.1",
   "author": "Tomáš Duda",
+  "repository" :
+    { "type" : "git",
+    "url" : "http://github.com/TomasDuda/cleverbot-steam.git"
+    },
   "dependencies": {
     "steam": "0.5.x",
     "cleverbot-node": "0.1.x"
