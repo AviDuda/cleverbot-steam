@@ -77,9 +77,9 @@ bot.on('message', function(source, message, type, chatter) {
           bot.sendMessage(msgArr[1], msgArr.slice(2).join(' '), Steam.EChatEntryType.ChatMsg);
         }
         else if(/^\/sendtoall.*/.test(message) && msgArr.length >= 3) { // /sendtoall <lastActiveAgoInMS> <message>
-          var lastActiveAgoInMS = msgArr[1] || 300000; // 300000 = 1000 * 60 * 5 = 5 minutes
+          var lastActiveAgoInMS = parseInt(msgArr[1]) || 300000; // 300000 = 1000 * 60 * 5 = 5 minutes
           for (roomID in cleverbots) {
-            if (bot.chatRooms[roomID] !== undefined && new Date() - cleverbots[roomID]["lastMessage"] <= lastActiveAgoInMS) {
+            if (new Date() - cleverbots[roomID]["lastMessage"] <= lastActiveAgoInMS) {
               bot.sendMessage(roomID, msgArr.slice(1).join(' '), Steam.EChatEntryType.ChatMsg);
             }
           }
@@ -125,7 +125,7 @@ bot.on('message', function(source, message, type, chatter) {
 
       for (var i = 0; i < config.listenToCalls.length; i++) {
         if (message.toLowerCase().substr(0, config.listenToCalls[i].length) == config.listenToCalls[i].toLowerCase()) {
-          message = message.replace(new RegExp("^" + config.listenToCalls[i] + "(\\W)+", "i"), "");
+          message = message.replace(new RegExp("^" + config.listenToCalls[i] + "[ ,.?!]+", "i"), "");
           shouldReply = true;
           break;
         }
