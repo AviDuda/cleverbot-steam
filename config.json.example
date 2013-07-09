@@ -9,7 +9,7 @@
     "defaultJoinMessage": "Hi! I'm MostlyHuman, a clever chat bot. I'm ready to talk with you!",
     "autoJoin": {
       "76561198020275445": "Hi, my creator!",
-      "103582791434429200": false
+      "103582791434429200": "Hi! Your favorite bot is here and ready to talk with you!"
     }
   },
   "staging": {
