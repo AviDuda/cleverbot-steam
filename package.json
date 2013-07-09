@@ -12,6 +12,9 @@
     "steam": "0.5.x",
     "cleverbot-node": "0.1.x"
   },
+  "scripts": {
+    "preinstall": "npm install -g forever"
+  },
   "engines": {
     "node": "0.10.x",
     "npm": "1.2.x"

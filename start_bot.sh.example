@@ -1,3 +1,0 @@
-#!/bin/bash
-
-STEAM_USERNAME=yourusername STEAM_PASSWORD=yourpassword node bot.js

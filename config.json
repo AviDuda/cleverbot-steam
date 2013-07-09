@@ -1,7 +1,0 @@
-{
-  "botName": "MostlyHuman",
-  "listenToCalls": ["Cleverbot", "MostlyHuman", "bot"],
-  "autoJoin": {
-    "103582791434429200": "Hi! Your favorite bot is here and ready to talk with you!"
-  }
-}

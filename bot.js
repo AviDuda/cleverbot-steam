@@ -8,41 +8,17 @@ var config;
 
 var cleverbots = {};
 
-process.stdin.resume();
-process.stdin.setEncoding('utf8');
-
 // load config
 fs.readFile('config.json', function (err, data) {
   config = JSON.parse(data.toString());
-  bot.logOn(process.env.STEAM_USERNAME, process.env.STEAM_PASSWORD);
+  config = config[process.env.BOT_ENV];
+  bot.logOn(config.steamUsername, config.steamPassword);
   bot.setPersonaName(config.botName);
-});
-
-process.stdin.on('data', function (text) {
-  text = text.trim();
-
-  util.log('received data:', text);
-  textArr = text.split(' ');
-
-  if (textArr[0] == 'join' && textArr[1]) {
-    var message = textArr.slice(2).join(' ') || 'Hi, are you a computer?';
-    joinChat(textArr[1], message);
-  }
-  else if (text.toLowerCase() === 'show chatrooms') {
-    util.log(bot.chatRooms);
-  }
-  else if (text.toLowerCase() === 'show users') {
-    util.log(bot.users);
-  }
-  else if (text.toLowerCase() === 'quit') {
-    util.log('Bye!');
-    process.exit();
-  }
 });
 
 bot.on('loggedOn', function() {
   util.log('Logged in!');
-  bot.setPersonaState(Steam.EPersonaState.Online);
+  setState(config.botState);
 
   for (chatID in config.autoJoin) {
     joinChat(chatID, config.autoJoin[chatID]);
@@ -53,6 +29,7 @@ bot.on('relationship', function(steamID, relationship) {
   util.log('Relationship change for ' + steamID + ' - ' + relationship);
   if (relationship == Steam.EFriendRelationship.PendingInvitee) {
     bot.addFriend(steamID);
+    checkCleverbotInstance(steamID);
     bot.sendMessage(steamID, "Hi, thanks for adding me to your friends! I'm Cleverbot, I will reply to all of your questions.", Steam.EChatEntryType.ChatMsg);
   }
 });
@@ -60,6 +37,7 @@ bot.on('relationship', function(steamID, relationship) {
 bot.on('chatInvite', function(chatRoomID, chatRoomName, patronID) {
   util.log('Got an invite to ' + chatRoomName + ' from ' + bot.users[patronID].playerName);
   bot.joinChat(chatRoomID); // autojoin on invite
+  checkCleverbotInstance(chatRoomID);
 });
 
 bot.on('message', function(source, message, type, chatter) {
@@ -70,9 +48,77 @@ bot.on('message', function(source, message, type, chatter) {
   if (message != '') {
     var shouldReply = false;
 
+    checkCleverbotInstance(source);
+    cleverbots[source]["lastMessage"] = new Date();
+
+    if (bot.chatRooms[source] === undefined) {
+      joinChat(source, false);
+    }
+
     if (chatter === undefined) {
       // chat between a bot and another user
-      shouldReply = true;
+
+      // check if the user is bot's admin and if it starts with / for commands (e.g. /join <roomid> [message])
+      if (config.botAdmins.indexOf(source) >= 0 && message[0] == "/") {
+        var msgArr = message.split(" ");
+
+        var helpText = "Available commands: \
+\n/join <roomID> [<message>] - Joins the room and posts a message '" + config.defaultJoinMessage + "' unless the message is specified. Set the message to 'false' if you don't want to send a message. \
+\n/send <roomID> <message> - Sends a message to a chatroom. \
+\n/sendtoall <lastActiveAgoInMS> <message> - Sends a message to all rooms which have the last message to/from bot was max. lastActiveAgoInMS milliseconds ago. lastActiveAgoInMS's default is 300000 (5 minutes). \
+\n/chatrooms - List of chatrooms with members. \
+\n/status online|offline|away|snooze|busy - Sets bot's status. Warning: Bot isn't responding to any messages when you set its status to offline. \
+\n/name <name> - Sets the bot's name.";
+
+        if (/^\/join.*/.test(message) && msgArr.length >= 1) { // /join <roomID> [<message>]
+            joinChat(msgArr[1], msgArr.slice(2).join(' '));
+        }
+        else if(/^\/send.*/.test(message) && msgArr.length >= 3) { // /send <roomID> <message>
+          bot.sendMessage(msgArr[1], msgArr.slice(2).join(' '), Steam.EChatEntryType.ChatMsg);
+        }
+        else if(/^\/sendtoall.*/.test(message) && msgArr.length >= 3) { // /sendtoall <lastActiveAgoInMS> <message>
+          var lastActiveAgoInMS = msgArr[1] || 300000; // 300000 = 1000 * 60 * 5 = 5 minutes
+          for (roomID in cleverbots) {
+            if (bot.chatRooms[roomID] !== undefined && new Date() - cleverbots[roomID]["lastMessage"] <= lastActiveAgoInMS) {
+              bot.sendMessage(roomID, msgArr.slice(1).join(' '), Steam.EChatEntryType.ChatMsg);
+            }
+          }
+        }
+        else if(message == "/chatrooms") {
+          var reply = Object.keys(cleverbots).length + " chatrooms found.";
+          for (roomID in cleverbots) {
+            if (bot.chatRooms[roomID] === undefined) {
+              // private chat
+              reply += "\nhttp://steamcommunity.com/profiles/" + roomID;
+            }
+            else {
+              // group chat
+              var groupWord = (parseInt(roomID)) ? "gid" : "groups";
+              reply += "\nhttp://steamcommunity.com/" + groupWord + "/" + roomID + " - " + Object.keys(bot.chatRooms[roomID]).length + " members";
+            }
+
+            reply += " - last message " + cleverbots[roomID]["lastMessage"];
+          }
+          bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
+        }
+        else if(/^\/status.*/.test(message) && msgArr.length == 2) { // /status online|offline|away|snooze|busy
+          setState(msgArr[1]);
+        }
+        else if(/^\/name.*/.test(message) && msgArr.length >= 1) { // /name <name>
+          util.log("Setting bot's name to " + msgArr.slice(1).join(' '));
+          bot.setPersonaName(msgArr.slice(1).join(' '));
+        }
+        else if(message == "/help") {
+          bot.sendMessage(source, helpText, Steam.EChatEntryType.ChatMsg);
+        }
+        else {
+          var reply = "Unknown command '" + message + "'.\n" + helpText;
+          bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
+        }
+      }
+      else {
+        shouldReply = true;
+      }
     }
     else {
       // it's a group chat, respond only when users call Cleverbot directly (config.listenToCalls)
@@ -87,22 +133,11 @@ bot.on('message', function(source, message, type, chatter) {
     }
 
     if (shouldReply) {
-      util.log('Received message from ' + source + ': ' + message);
-      if (message == 'ping') {
-        bot.sendMessage(source, 'pong', Steam.EChatEntryType.ChatMsg);
-      }
-      else {
-        if (cleverbots[source] === undefined) {
-          util.log("New Cleverbot instance for " + source);
-          cleverbots[source] = new Cleverbot;
-        }
-
-        cleverbots[source].write(message, function(resp) {
-          var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
-          bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
-          util.log('Reply to ' + source + ' - message "' + message + '": ' + resp['message']);
-        });
-      }
+      cleverbots[source]["cleverbot"].write(message, function(resp) {
+        cleverbots[source]["lastMessage"] = new Date();
+        var reply = (chatter === undefined) ? resp['message'] : '"' + message + "\"\n" + resp['message'];
+        bot.sendMessage(source, reply, Steam.EChatEntryType.ChatMsg);
+      });
     }
   }
 });
@@ -118,7 +153,35 @@ function showError(err) {
 function joinChat(roomID, message) {
   util.log('Joining chat ' + roomID);
   bot.joinChat(roomID);
-  if (message) {
-    bot.sendMessage(roomID, message, Steam.EChatEntryType.ChatMsg);
+
+  if (message !== false && message !== "false") {
+    var msg = (message) ? message : config.defaultJoinMessage;
+    bot.sendMessage(roomID, msg, Steam.EChatEntryType.ChatMsg);
   }
+
+  checkCleverbotInstance(roomID);
+}
+
+function checkCleverbotInstance(roomID) {
+  if (cleverbots[roomID] === undefined) {
+    util.log("New Cleverbot instance for " + roomID);
+    cleverbots[roomID] = {
+      "cleverbot": new Cleverbot,
+      "lastMessage": 0
+    }
+  }
+}
+
+function setState(state) {
+  var type = Steam.EPersonaState.Online;
+  switch (state) {
+    case "online": type = Steam.EPersonaState.Online; break;
+    case "offline": type = Steam.EPersonaState.Offline; break;
+    case "away": type = Steam.EPersonaState.Away; break;
+    case "snooze": type = Steam.EPersonaState.Snooze; break;
+    case "busy": type = Steam.EPersonaState.Busy; break;
+    default: type = Steam.EPersonaState.Online; state = "online"; break;
+  }
+  util.log("Setting bot's state to " + state);
+  bot.setPersonaState(type);
 }

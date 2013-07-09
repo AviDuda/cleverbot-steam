@@ -1,0 +1,27 @@
+{
+  "production": {
+    "steamUsername": "yoursteamusername",
+    "steamPassword": "yoursteampassword",
+    "botName": "MostlyHuman",
+    "botState": "online",
+    "botAdmins": ["76561198020275445"],
+    "listenToCalls": ["Cleverbot", "MostlyHuman", "bot"],
+    "defaultJoinMessage": "Hi! I'm MostlyHuman, a clever chat bot. I'm ready to talk with you!",
+    "autoJoin": {
+      "76561198020275445": "Hi, my creator!",
+      "103582791434429200": false
+    }
+  },
+  "staging": {
+    "steamUsername": "yoursteamusername",
+    "steamPassword": "yoursteampassword",
+    "botName": "MostlyHuman Test",
+    "botState": "online",
+    "botAdmins": ["76561198020275445"],
+    "listenToCalls": ["Cleverbot", "MostlyHuman", "bot"],
+    "defaultJoinMessage": "Hi! I'm MostlyHuman, a clever chat bot. I'm ready to talk with you!",
+    "autoJoin": {
+      "76561198020275445": "Hi, my creator!"
+    }
+  }
+}
