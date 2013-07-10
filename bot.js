@@ -137,7 +137,18 @@ bot.on('message', function(source, message, type, chatter) {
     if (shouldReply) {
       cleverbots[source]["cleverbot"].write(message, function(resp) {
         cleverbots[source]["lastMessage"] = new Date();
-        var reply = (chatter === undefined) ? resp['message'] : bot.users[chatter].playerName + ': ' + message + "\n" + resp['message'];
+
+        var reply;
+
+        if (resp['message'] && resp['message'] != "<html>") {
+          reply = (chatter === undefined) ? resp['message'] : bot.users[chatter].playerName + ': ' + message + "\n" + resp['message'];
+          
+        }
+        else {
+          reply = "Bot is broken. Please try again later.";
+          showError("Bot is broken. Response was: " + JSON.stringify(resp));
+        }
+
         bot.sendMessage(source, ent.decode(reply), Steam.EChatEntryType.ChatMsg);
       });
     }
