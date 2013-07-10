@@ -14,7 +14,7 @@ Simple Steam chat bot for people who are bored and don't have anyone to talk wit
       * `steamUsername` - Bot's Steam username.
       * `steamPassword` - Bot's Steam password.
       * `botName` - This will change the profile name of your bot.
-      * `botState` - Profile state of your bot. Options: _onlne_, _offline_, _busy_, _away_, _snooze_
+      * `botState` - Profile state of your bot. Options: _online_, _offline_, _busy_, _away_, _snooze_
       * `botAdmins` - Array of SteamIDs of people who can send commands (example `/send <roomID> <message>`) to your bot. `/help` command lists all commands.
       * `listenToCalls` - Bot replies in the group chat only to messages starting with the specified strings (case insensitive).
       * `defaultJoinMessage` - Default message the bot will send when joining a chat unless a message is specified (or the message is `false`).
