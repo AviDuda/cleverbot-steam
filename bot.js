@@ -65,8 +65,12 @@ bot.on('message', function(source, message, type, chatter) {
         }
       }
     }
+    else {
+      // it's a private chat
+      shouldReply = true;
+    }
 
-    if (message[0] == "/" && (config.botAdmins.indexOf(source) >= 0 || config.botAdmins.indexOf(chatter) >= 0)) {
+    if (shouldReply && message[0] == "/" && (config.botAdmins.indexOf(source) >= 0 || config.botAdmins.indexOf(chatter) >= 0)) {
       // it's a command
 
       shouldReply = false;
@@ -128,10 +132,6 @@ bot.on('message', function(source, message, type, chatter) {
         var reply = "Unknown command '" + message + "'.\n" + helpText;
         bot.sendMessage(source, ent.decode(reply), Steam.EChatEntryType.ChatMsg);
       }
-    }
-    else if (chatter === undefined) {
-      // not a command and in a private chat
-      shouldReply = true;
     }
 
     if (shouldReply) {
