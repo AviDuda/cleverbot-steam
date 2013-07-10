@@ -15,8 +15,9 @@ Simple Steam chat bot for people who are bored and don't have anyone to talk wit
 
 * Install [node.js](http://nodejs.org/).
 * In the directory with cleverbot-steam:
-  * `npm install` to install dependencies (you may need to run this as admin with `sudo` for installing [forever](https://github.com/nodejitsu/forever)).
-  * Set values in [config.json](config.json):
+  * `npm install` to install dependencies
+  * `sudo npm install -g forever`
+  * Copy [config.json.example](config.json.example) to `config.json` and set values:
       * `steamUsername` - Bot's Steam username.
       * `steamPassword` - Bot's Steam password.
       * `botName` - This will change the profile name of your bot.

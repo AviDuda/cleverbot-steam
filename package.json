@@ -10,10 +10,8 @@
     },
   "dependencies": {
     "steam": "0.5.x",
-    "cleverbot-node": "0.1.x"
-  },
-  "scripts": {
-    "preinstall": "npm install -g forever"
+    "cleverbot-node": "0.1.x",
+    "ent": "0.0.x"
   },
   "engines": {
     "node": "0.10.x",
